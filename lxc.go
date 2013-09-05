@@ -42,10 +42,12 @@ func NewContainer(name string) *Container {
 	return &Container{container: C.lxc_container_new(cname, nil)}
 }
 
+// Increments reference counter of the container object
 func GetContainer(lxc *Container) bool {
 	return C.lxc_container_get(lxc.container) == 1
 }
 
+// Decrements reference counter of the container object
 func PutContainer(lxc *Container) bool {
 	return C.lxc_container_put(lxc.container) == 1
 }
