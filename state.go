@@ -1,3 +1,5 @@
+// +build linux
+
 /*
  * state.go: Go bindings for lxc
  *
