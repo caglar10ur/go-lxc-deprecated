@@ -259,11 +259,8 @@ func (lxc *Container) NumberOfNetworkInterfaces() int {
 	defer lxc.RUnlock()
 	if lxc.Running() {
 		return len(lxc.ConfigItem("lxc.network"))
-	} else {
-		return -1
 	}
-	// Unreachable code but required for compatibility with Go 1.0.3 see -- https://groups.google.com/d/msg/golang-nuts/OXcMGoGYSLg/nfH_zvhnBHsJ
-	panic("unreachable")
+	return -1
 }
 
 func (lxc *Container) MemoryUsageInBytes() (ByteSize, error) {

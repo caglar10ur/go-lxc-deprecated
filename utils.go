@@ -7,6 +7,8 @@
 // Authors:
 // S.Çağlar Onur <caglar@10ur.org>
 
+// +build linux
+
 package lxc
 
 // #include <stdlib.h>
