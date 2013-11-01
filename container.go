@@ -156,16 +156,27 @@ func (lxc *Container) Wait(state State, timeout int) bool {
 func (lxc *Container) ConfigFileName() string {
 	lxc.RLock()
 	defer lxc.RUnlock()
-	return C.GoString(C.lxc_container_config_file_name(lxc.container))
+
+	// allocated in lxc.c
+	configFileName := C.lxc_container_config_file_name(lxc.container)
+	defer C.free(unsafe.Pointer(configFileName))
+
+	return C.GoString(configFileName)
 }
 
 // Returns the value of the given key
 func (lxc *Container) ConfigItem(key string) []string {
 	lxc.RLock()
 	defer lxc.RUnlock()
+
 	ckey := C.CString(key)
 	defer C.free(unsafe.Pointer(ckey))
-	ret := strings.TrimSpace(C.GoString(C.lxc_container_get_config_item(lxc.container, ckey)))
+
+	// allocated in lxc.c
+	configItem := C.lxc_container_get_config_item(lxc.container, ckey)
+	defer C.free(unsafe.Pointer(configItem))
+
+	ret := strings.TrimSpace(C.GoString(configItem))
 	return strings.Split(ret, "\n")
 }
 
@@ -184,9 +195,15 @@ func (lxc *Container) SetConfigItem(key string, value string) bool {
 func (lxc *Container) CgroupItem(key string) []string {
 	lxc.RLock()
 	defer lxc.RUnlock()
+
 	ckey := C.CString(key)
 	defer C.free(unsafe.Pointer(ckey))
-	ret := strings.TrimSpace(C.GoString(C.lxc_container_get_cgroup_item(lxc.container, ckey)))
+
+	// allocated in lxc.c
+	cgroupItem := C.lxc_container_get_cgroup_item(lxc.container, ckey)
+	defer C.free(unsafe.Pointer(cgroupItem))
+
+	ret := strings.TrimSpace(C.GoString(cgroupItem))
 	return strings.Split(ret, "\n")
 }
 
@@ -214,9 +231,15 @@ func (lxc *Container) ClearConfigItem(key string) bool {
 func (lxc *Container) Keys(key string) []string {
 	lxc.RLock()
 	defer lxc.RUnlock()
+
 	ckey := C.CString(key)
 	defer C.free(unsafe.Pointer(ckey))
-	ret := strings.TrimSpace(C.GoString(C.lxc_container_get_keys(lxc.container, ckey)))
+
+	// allocated in lxc.c
+	keys := C.lxc_container_get_keys(lxc.container, ckey)
+	defer C.free(unsafe.Pointer(keys))
+
+	ret := strings.TrimSpace(C.GoString(keys))
 	return strings.Split(ret, "\n")
 }
 
