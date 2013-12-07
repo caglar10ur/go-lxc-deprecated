@@ -24,76 +24,76 @@ import (
 
 type Container struct {
 	container *C.struct_lxc_container
-	sync.RWMutex
+	mu        sync.RWMutex
 }
 
 // Returns container's name
 func (lxc *Container) Name() string {
-	lxc.RLock()
-	defer lxc.RUnlock()
+	lxc.mu.RLock()
+	defer lxc.mu.RUnlock()
 	return C.GoString(lxc.container.name)
 }
 
 // Returns whether the container is already defined or not
 func (lxc *Container) Defined() bool {
-	lxc.RLock()
-	defer lxc.RUnlock()
+	lxc.mu.RLock()
+	defer lxc.mu.RUnlock()
 	return bool(C.lxc_container_defined(lxc.container))
 }
 
 // Returns whether the container is already running or not
 func (lxc *Container) Running() bool {
-	lxc.RLock()
-	defer lxc.RUnlock()
+	lxc.mu.RLock()
+	defer lxc.mu.RUnlock()
 	return bool(C.lxc_container_running(lxc.container))
 }
 
 // Returns the container's state
 func (lxc *Container) State() State {
-	lxc.RLock()
-	defer lxc.RUnlock()
+	lxc.mu.RLock()
+	defer lxc.mu.RUnlock()
 	return stateMap[C.GoString(C.lxc_container_state(lxc.container))]
 }
 
 // Returns the container's PID
 func (lxc *Container) InitPID() int {
-	lxc.RLock()
-	defer lxc.RUnlock()
+	lxc.mu.RLock()
+	defer lxc.mu.RUnlock()
 	return int(C.lxc_container_init_pid(lxc.container))
 }
 
 // Returns whether the daemonize flag is set
 func (lxc *Container) Daemonize() bool {
-	lxc.RLock()
-	defer lxc.RUnlock()
+	lxc.mu.RLock()
+	defer lxc.mu.RUnlock()
 	return bool(lxc.container.daemonize != 0)
 }
 
 // Sets the daemonize flag
 func (lxc *Container) SetDaemonize() {
-	lxc.Lock()
-	defer lxc.Unlock()
+	lxc.mu.Lock()
+	defer lxc.mu.Unlock()
 	C.lxc_container_want_daemonize(lxc.container)
 }
 
 // Freezes the running container
 func (lxc *Container) Freeze() bool {
-	lxc.Lock()
-	defer lxc.Unlock()
+	lxc.mu.Lock()
+	defer lxc.mu.Unlock()
 	return bool(C.lxc_container_freeze(lxc.container))
 }
 
 // Unfreezes the frozen container
 func (lxc *Container) Unfreeze() bool {
-	lxc.Lock()
-	defer lxc.Unlock()
+	lxc.mu.Lock()
+	defer lxc.mu.Unlock()
 	return bool(C.lxc_container_unfreeze(lxc.container))
 }
 
 // Creates the container using given template and arguments
 func (lxc *Container) Create(template string, args []string) bool {
-	lxc.Lock()
-	defer lxc.Unlock()
+	lxc.mu.Lock()
+	defer lxc.mu.Unlock()
 
 	ctemplate := C.CString(template)
 	defer C.free(unsafe.Pointer(ctemplate))
@@ -107,8 +107,8 @@ func (lxc *Container) Create(template string, args []string) bool {
 
 // Starts the container
 func (lxc *Container) Start(useinit bool, args []string) bool {
-	lxc.Lock()
-	defer lxc.Unlock()
+	lxc.mu.Lock()
+	defer lxc.mu.Unlock()
 
 	cuseinit := 0
 	if useinit {
@@ -124,29 +124,29 @@ func (lxc *Container) Start(useinit bool, args []string) bool {
 
 // Stops the container
 func (lxc *Container) Stop() bool {
-	lxc.Lock()
-	defer lxc.Unlock()
+	lxc.mu.Lock()
+	defer lxc.mu.Unlock()
 	return bool(C.lxc_container_stop(lxc.container))
 }
 
 // Shutdowns the container
 func (lxc *Container) Shutdown(timeout int) bool {
-	lxc.Lock()
-	defer lxc.Unlock()
+	lxc.mu.Lock()
+	defer lxc.mu.Unlock()
 	return bool(C.lxc_container_shutdown(lxc.container, C.int(timeout)))
 }
 
 // Destroys the container
 func (lxc *Container) Destroy() bool {
-	lxc.Lock()
-	defer lxc.Unlock()
+	lxc.mu.Lock()
+	defer lxc.mu.Unlock()
 	return bool(C.lxc_container_destroy(lxc.container))
 }
 
 // Waits till the container changes its state or timeouts
 func (lxc *Container) Wait(state State, timeout int) bool {
-	lxc.Lock()
-	defer lxc.Unlock()
+	lxc.mu.Lock()
+	defer lxc.mu.Unlock()
 	cstate := C.CString(state.String())
 	defer C.free(unsafe.Pointer(cstate))
 	return bool(C.lxc_container_wait(lxc.container, cstate, C.int(timeout)))
@@ -154,8 +154,8 @@ func (lxc *Container) Wait(state State, timeout int) bool {
 
 // Returns the container's configuration file's name
 func (lxc *Container) ConfigFileName() string {
-	lxc.RLock()
-	defer lxc.RUnlock()
+	lxc.mu.RLock()
+	defer lxc.mu.RUnlock()
 
 	// allocated in lxc.c
 	configFileName := C.lxc_container_config_file_name(lxc.container)
@@ -166,8 +166,8 @@ func (lxc *Container) ConfigFileName() string {
 
 // Returns the value of the given key
 func (lxc *Container) ConfigItem(key string) []string {
-	lxc.RLock()
-	defer lxc.RUnlock()
+	lxc.mu.RLock()
+	defer lxc.mu.RUnlock()
 
 	ckey := C.CString(key)
 	defer C.free(unsafe.Pointer(ckey))
@@ -182,8 +182,8 @@ func (lxc *Container) ConfigItem(key string) []string {
 
 // Sets the value of given key
 func (lxc *Container) SetConfigItem(key string, value string) bool {
-	lxc.Lock()
-	defer lxc.Unlock()
+	lxc.mu.Lock()
+	defer lxc.mu.Unlock()
 	ckey := C.CString(key)
 	defer C.free(unsafe.Pointer(ckey))
 	cvalue := C.CString(value)
@@ -193,8 +193,8 @@ func (lxc *Container) SetConfigItem(key string, value string) bool {
 
 // Returns the value of the given key
 func (lxc *Container) CgroupItem(key string) []string {
-	lxc.RLock()
-	defer lxc.RUnlock()
+	lxc.mu.RLock()
+	defer lxc.mu.RUnlock()
 
 	ckey := C.CString(key)
 	defer C.free(unsafe.Pointer(ckey))
@@ -209,8 +209,8 @@ func (lxc *Container) CgroupItem(key string) []string {
 
 // Sets the value of given key
 func (lxc *Container) SetCgroupItem(key string, value string) bool {
-	lxc.Lock()
-	defer lxc.Unlock()
+	lxc.mu.Lock()
+	defer lxc.mu.Unlock()
 	ckey := C.CString(key)
 	defer C.free(unsafe.Pointer(ckey))
 	cvalue := C.CString(value)
@@ -220,8 +220,8 @@ func (lxc *Container) SetCgroupItem(key string, value string) bool {
 
 // Clears the value of given key
 func (lxc *Container) ClearConfigItem(key string) bool {
-	lxc.Lock()
-	defer lxc.Unlock()
+	lxc.mu.Lock()
+	defer lxc.mu.Unlock()
 	ckey := C.CString(key)
 	defer C.free(unsafe.Pointer(ckey))
 	return bool(C.lxc_container_clear_config_item(lxc.container, ckey))
@@ -229,8 +229,8 @@ func (lxc *Container) ClearConfigItem(key string) bool {
 
 // Returns the keys
 func (lxc *Container) Keys(key string) []string {
-	lxc.RLock()
-	defer lxc.RUnlock()
+	lxc.mu.RLock()
+	defer lxc.mu.RUnlock()
 
 	ckey := C.CString(key)
 	defer C.free(unsafe.Pointer(ckey))
@@ -245,8 +245,8 @@ func (lxc *Container) Keys(key string) []string {
 
 // Loads the configuration file from given path
 func (lxc *Container) LoadConfigFile(path string) bool {
-	lxc.Lock()
-	defer lxc.Unlock()
+	lxc.mu.Lock()
+	defer lxc.mu.Unlock()
 	cpath := C.CString(path)
 	defer C.free(unsafe.Pointer(cpath))
 	return bool(C.lxc_container_load_config(lxc.container, cpath))
@@ -254,8 +254,8 @@ func (lxc *Container) LoadConfigFile(path string) bool {
 
 // Saves the configuration file to given path
 func (lxc *Container) SaveConfigFile(path string) bool {
-	lxc.Lock()
-	defer lxc.Unlock()
+	lxc.mu.Lock()
+	defer lxc.mu.Unlock()
 	cpath := C.CString(path)
 	defer C.free(unsafe.Pointer(cpath))
 	return bool(C.lxc_container_save_config(lxc.container, cpath))
@@ -263,23 +263,23 @@ func (lxc *Container) SaveConfigFile(path string) bool {
 
 // Returns the configuration file's path
 func (lxc *Container) ConfigPath() string {
-	lxc.RLock()
-	defer lxc.RUnlock()
+	lxc.mu.RLock()
+	defer lxc.mu.RUnlock()
 	return C.GoString(C.lxc_container_get_config_path(lxc.container))
 }
 
 // Sets the configuration file's path
 func (lxc *Container) SetConfigPath(path string) bool {
-	lxc.Lock()
-	defer lxc.Unlock()
+	lxc.mu.Lock()
+	defer lxc.mu.Unlock()
 	cpath := C.CString(path)
 	defer C.free(unsafe.Pointer(cpath))
 	return bool(C.lxc_container_set_config_path(lxc.container, cpath))
 }
 
 func (lxc *Container) NumberOfNetworkInterfaces() int {
-	lxc.RLock()
-	defer lxc.RUnlock()
+	lxc.mu.RLock()
+	defer lxc.mu.RUnlock()
 	if lxc.Running() {
 		return len(lxc.ConfigItem("lxc.network"))
 	}
@@ -287,8 +287,8 @@ func (lxc *Container) NumberOfNetworkInterfaces() int {
 }
 
 func (lxc *Container) MemoryUsageInBytes() (ByteSize, error) {
-	lxc.RLock()
-	defer lxc.RUnlock()
+	lxc.mu.RLock()
+	defer lxc.mu.RUnlock()
 	if lxc.Running() {
 		memUsed, err := strconv.ParseFloat(lxc.CgroupItem("memory.usage_in_bytes")[0], 64)
 		if err != nil {
@@ -300,8 +300,8 @@ func (lxc *Container) MemoryUsageInBytes() (ByteSize, error) {
 }
 
 func (lxc *Container) SwapUsageInBytes() (ByteSize, error) {
-	lxc.RLock()
-	defer lxc.RUnlock()
+	lxc.mu.RLock()
+	defer lxc.mu.RUnlock()
 	if lxc.Running() {
 		swapUsed, err := strconv.ParseFloat(lxc.CgroupItem("memory.memsw.usage_in_bytes")[0], 64)
 		if err != nil {
@@ -313,8 +313,8 @@ func (lxc *Container) SwapUsageInBytes() (ByteSize, error) {
 }
 
 func (lxc *Container) MemoryLimitInBytes() (ByteSize, error) {
-	lxc.RLock()
-	defer lxc.RUnlock()
+	lxc.mu.RLock()
+	defer lxc.mu.RUnlock()
 	if lxc.Running() {
 		memLimit, err := strconv.ParseFloat(lxc.CgroupItem("memory.limit_in_bytes")[0], 64)
 		if err != nil {
@@ -326,8 +326,8 @@ func (lxc *Container) MemoryLimitInBytes() (ByteSize, error) {
 }
 
 func (lxc *Container) SwapLimitInBytes() (ByteSize, error) {
-	lxc.RLock()
-	defer lxc.RUnlock()
+	lxc.mu.RLock()
+	defer lxc.mu.RUnlock()
 	if lxc.Running() {
 		swapLimit, err := strconv.ParseFloat(lxc.CgroupItem("memory.memsw.limit_in_bytes")[0], 64)
 		if err != nil {
@@ -340,8 +340,8 @@ func (lxc *Container) SwapLimitInBytes() (ByteSize, error) {
 
 // Returns the total CPU time (in nanoseconds) consumed by all tasks in this cgroup (including tasks lower in the hierarchy).
 func (lxc *Container) CPUTime() (time.Duration, error) {
-	lxc.RLock()
-	defer lxc.RUnlock()
+	lxc.mu.RLock()
+	defer lxc.mu.RUnlock()
 	if lxc.Running() {
 		cpuUsage, err := strconv.ParseInt(lxc.CgroupItem("cpuacct.usage")[0], 10, 64)
 		if err != nil {
@@ -354,8 +354,8 @@ func (lxc *Container) CPUTime() (time.Duration, error) {
 
 // Returns the CPU time (in nanoseconds) consumed on each CPU by all tasks in this cgroup (including tasks lower in the hierarchy).
 func (lxc *Container) CPUTimePerCPU() ([]time.Duration, error) {
-	lxc.RLock()
-	defer lxc.RUnlock()
+	lxc.mu.RLock()
+	defer lxc.mu.RUnlock()
 	var cpuTimes []time.Duration
 
 	if lxc.Running() {
@@ -373,8 +373,8 @@ func (lxc *Container) CPUTimePerCPU() ([]time.Duration, error) {
 
 // Returns the number of CPU cycles (in the units defined by USER_HZ on the system) consumed by tasks in this cgroup and its children in both user mode and system (kernel) mode.
 func (lxc *Container) CPUStats() ([]int64, error) {
-	lxc.RLock()
-	defer lxc.RUnlock()
+	lxc.mu.RLock()
+	defer lxc.mu.RUnlock()
 	if lxc.Running() {
 		cpuStat := lxc.CgroupItem("cpuacct.stat")
 		user, _ := strconv.ParseInt(strings.Split(cpuStat[0], " ")[1], 10, 64)
