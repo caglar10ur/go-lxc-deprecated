@@ -100,7 +100,7 @@ func TestCreate(t *testing.T) {
 	defer PutContainer(z)
 
 	t.Logf("Creating the container...\n")
-	if !z.Create("ubuntu", []string{"amd64", "quantal"}) {
+	if !z.Create("busybox", []string{"amd64"}) {
 		t.Errorf("Creating the container failed...")
 	}
 }
@@ -108,7 +108,7 @@ func TestCreate(t *testing.T) {
 func TestConcurrentCreate(t *testing.T) {
 	var wg sync.WaitGroup
 
-	for i := 0; i <= 10; i++ {
+	for i := 0; i < 10; i++ {
 		wg.Add(1)
 		go func(i int) {
 			z := NewContainer(strconv.Itoa(i))
@@ -118,7 +118,7 @@ func TestConcurrentCreate(t *testing.T) {
 			time.Sleep(time.Millisecond * time.Duration(rand.Intn(250)))
 
 			t.Logf("Creating the container...\n")
-			if !z.Create("ubuntu", []string{"amd64", "quantal"}) {
+			if !z.Create("busybox", []string{"amd64"}) {
 				t.Errorf("Creating the container (%d) failed...", i)
 			}
 			wg.Done()
@@ -424,7 +424,7 @@ func TestDestroy(t *testing.T) {
 func TestConcurrentDestroy(t *testing.T) {
 	var wg sync.WaitGroup
 
-	for i := 0; i <= 10; i++ {
+	for i := 0; i < 10; i++ {
 		wg.Add(1)
 		go func(i int) {
 			z := NewContainer(strconv.Itoa(i))
