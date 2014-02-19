@@ -1,13 +1,14 @@
-# DEPRECATED: The official repository for this project has been moved to https://github.com/lxc/go-lxc
+### The official repository for this project has been moved to [LXC](https://github.com/lxc/) organization.
 
+This repository is kept here for historical purposes only.
 
-# Go Bindings for LXC (Linux Containers)
+# Go Bindings for LXC 0.9
 
 This package implements [Go](http://golang.org) bindings for the [LXC](http://linuxcontainers.org/) C API.
 
 ## Requirements
 
-This package requires [LXC 0.9](https://github.com/lxc/lxc/releases) and [Go 1.x](https://code.google.com/p/go/downloads/list).
+This package requires [LXC 0.9](https://github.com/lxc/lxc/releases) and [Go 1.x](https://code.google.com/p/go/downloads/list). 
 
 It has been tested on 
 
